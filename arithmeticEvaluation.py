@@ -4,6 +4,10 @@ from copy import deepcopy
 a = 's'
 a in ('a', 's', 'd', 'f')
 
+b = [1, 2, 3]
+b.append(4)
+print b
+
 #%%
 class arithmetic(object):
     """Return evaluation of a given arithmetic expression (stored as a string).
@@ -11,7 +15,7 @@ class arithmetic(object):
     1. Only numbers(int or float), 4 basic operators (+, -, *, /), and left/right
        parenthesis are effective elements.
     2. There should be a seperator (single space) between each effective element in the string.
-    3. There is no conderation of operation priority among '+', '-' and '*', '/', i.e.,
+    3. There is no consideration of operation priority among '+', '-' and '*', '/', i.e.,
        every operation of two numbers should be embraced by a pair of parenthesis.
     4. This is an implementation of the so-called two-stack algorithm.
        1. Value: push onto the value stack.
@@ -22,10 +26,24 @@ class arithmetic(object):
     """
     
     def __init__(self, expression):
-        self.expression = expression.split(' ')
+        self.raw_expression = expression
         self.valueStack = []
         self.operatorStack = []
 
+    def parser(self):
+        self.expression = []
+        value_record = ''
+        for char in self.raw_expression:
+            if char in ('(', ')', '+', '-', '*', '/'):
+                if value_record != '':
+                    self.expression.append(value_record)
+                    value_record = ''
+                self.expression.append(char)
+            elif char in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'):
+                value_record += char
+            else:
+                continue
+            
     def elementType(self, element):
         """Return the type of element.
         value, operator, leftParenthesis, rightParenthesis.
@@ -67,7 +85,17 @@ class arithmetic(object):
 #%%
 e_obj = '( ( 1 + 2 ) + 3 )'
 a_obj = arithmetic(e_obj)
-print a_obj.evaluation()
+a_obj.parser()
 print a_obj.expression
+print a_obj.evaluation()
+print a_obj.operatorStack
+print a_obj.valueStack            
+
+#%%
+e_obj = '( ( 1 + 2) + 3)'
+a_obj = arithmetic(e_obj)
+a_obj.parser()
+print a_obj.expression
+print a_obj.evaluation()
 print a_obj.operatorStack
 print a_obj.valueStack            
