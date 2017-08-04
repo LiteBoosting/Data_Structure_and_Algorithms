@@ -1,7 +1,7 @@
+#%%
 class merge_sort(object):
     def __init__(self, vec):
-        import numpy as np
-        from copy import deepcopy
+        self.vec = deepcopy(np.array(vec))
         self.vec_aux = deepcopy(np.array(vec))
         self.n = len(vec)
         
@@ -31,10 +31,28 @@ class merge_sort(object):
         if right == None:
             right = self.n
         if right-left == 1:
-            return self.vec_aux[left:right]
+            return self.vec[left:right]
         else:
             middle = int(left+(right-left)/2)
             return self.merge(self.main_sort(left, middle), self.main_sort(middle, right))
+    def main_sort_1(self):
+        # do not use recursion
+        # partition
+        log_n = int(np.floor(np.log2(self.n)))
+        h = 1
+        for layer in np.arange(log_n):
+            h = h*2
+            partition = np.concatenate((np.arange(start=0, stop=self.n, step=h), np.array([self.n])))
+            for i in np.arange(len(partition)-1):
+                left = partition[i]
+                right = partition[i+1]
+                if right < self.n:
+                    middle = int((left+right)/2)
+                    self.vec[left:right] = self.merge(self.vec_aux[left:middle], self.vec_aux[middle:right])
+                else:
+                    right = self.n
+                    self.vec[left:right] = self.vec_aux[left:right]
+        
 #%%
 vec = np.array([0, 3, 4, 2, 9, 4])
 obj_ = merge_sort(vec)
