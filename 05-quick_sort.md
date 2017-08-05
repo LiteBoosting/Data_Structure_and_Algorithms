@@ -17,7 +17,8 @@ for i, k in enumerate(K):
     sample = [np.median(np.random.choice(vec, size=k, replace=False)) for i in np.arange(M)]
     sample = np.array(sample)
     ratio[i] = np.var(sample)/theoretical_variance
-    print("k = %2d, mean: %7.2f, var: %10.2f, ratio: %5.2f%%" % (k, np.mean(sample), np.var(sample), ratio[i]*100))
+    print("k = %2d, mean: %7.2f, var: %10.2f, ratio: %5.2f%%" %
+          (k, np.mean(sample), np.var(sample), ratio[i]*100))
 ```
    Here is the result:
 ```python
