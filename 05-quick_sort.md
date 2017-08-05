@@ -37,4 +37,4 @@ Here is thee result:
 [ 1.001215    0.60623306  0.42886938  0.33287747  0.27310735  0.23206374
   0.20295283  0.17560792]
 ```
-We can see by using K = 3, 5, 7, 9, 11, we get unchanged expection, and the variance decreases to 58.33%, 44.05%, 32.14%, 27.38%, and 22.62%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
+We can see by using K = 3, 5, 7, 9, 11, we get unchanged expection, and the variance decreases to 60.62%, 42.89%, 33.29%, 27.31%, and 23.21%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
