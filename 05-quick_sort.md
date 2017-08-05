@@ -19,7 +19,7 @@ for i, k in enumerate(K):
     ratio[i] = np.var(sample)/theoretical_variance
     print("k = %2d, mean: %7.2f, var: %10.2f, ratio: %5.2f%%" % (k, np.mean(sample), np.var(sample), ratio[i]*100))
 ```
-Here is thee result:
+   Here is the result:
 ```python
 k =  1, mean: 4993.96, var: 8312260.79, ratio: 99.75%
 k =  3, mean: 5041.19, var: 4995541.68, ratio: 59.95%
@@ -32,7 +32,7 @@ k = 15, mean: 4980.39, var: 1480211.34, ratio: 17.76%
 k = 17, mean: 5003.84, var: 1314474.02, ratio: 15.77%
 k = 19, mean: 4998.61, var: 1191109.57, ratio: 14.29%
 ```
-By using $K = 3, 5, ...$, we get similar expection, and the variance decreases to 60.45%, 43.24%, .... We see that the decreasing after $K=5$ is not that significant, therefore we suggest using $K \le 5$.
+   By using $K = 3, 5, ...$, we get similar expection, and the variance decreases to 60.45%, 43.24%, .... We see that the decreasing after $K=5$ is not that significant, therefore we suggest using $K \le 5$.
 
 4. The computational burden for adding this `mimic-distribution-take-median` step is (1) generating random number 5 times (which is constant time, since we do not need to shuffle the array, just generate 5 random numbers from $[0, 1]$, then multiply by the length of the array and take integer); (2) finding its median (finding median from 5 numbers, constant time); (3) making the swap (constant time).
 
