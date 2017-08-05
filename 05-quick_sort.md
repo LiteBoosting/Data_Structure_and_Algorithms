@@ -2,6 +2,8 @@
 
 2. Here is the simulation code:
 ```python
+import numpy as np
+
 N = 10000
 M = 10000
 vec = np.arange(N)
@@ -10,31 +12,35 @@ K = np.arange(start=1, stop=16, step=2)
 ratio = np.full((len(K),), None, dtype=float)
 theoretical_variance = (N*N-1)/12
 for i, k in enumerate(K):
-    sample = np.array([np.median(np.random.choice(vec, size=k, replace=False, p=None)) for i in np.arange(M)])
+    sample = [np.median(np.random.choice(vec, size=k, replace=False)) for i in np.arange(M)]
+    sample = np.array(sample)
     print(np.mean(sample))
     print(np.var(sample))
     ratio[i] = np.var(sample)/theoretical_variance
-print(ratio)
+print(ratio*100)
 ```
 Here is thee result:
 ```python
-5012.5153
-8343458.23817
-4947.8171
-5051942.11225
-4973.8719
-3573911.48329
-4980.3896
-2773978.86661
-4992.9284
-2275894.59247
-4972.6089
-1933864.46754
-4981.4073
-1691273.55501
-5016.4774
-1463399.34069
-[ 1.001215    0.60623306  0.42886938  0.33287747  0.27310735  0.23206374
-  0.20295283  0.17560792]
-```
-We can see by using K = 3, 5, 7, 9, 11, we get unchanged expection, and the variance decreases to 60.62%, 42.89%, 33.29%, 27.31%, and 23.21%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
+5016.8469
+8271304.28246
+5016.5936
+5037785.82224
+5017.9882
+3603309.47866
+5008.7623
+2744340.8474
+4986.436
+2284062.8771
+4995.931
+1920401.52064
+4990.4618
+1646849.90774
+4988.7481
+1488085.38605
+[ 99.25565238  60.45343047  43.23971418  32.9320905   27.4087548
+  23.04481848  19.76219909  17.85702481]```
+We can see by using K = 3, 5, 7, 9, 11, 13, 15, we get unchanged expection, and the variance decreases to 60.45%, 43.24%, 32.93%, 27.41%, 23.04%, 19.76%, and 17.86%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
+
+4. The computational burden for adding this mimic-distribution-taking-median step is that we need to (1) generate random number 5 times (which is constant time, since we do not need to shuffle the array, just generate a random number from 0 to 1, then multiply by the length of the array, and take integer); (2) find its median (finding median from 5 numbers, constant time); (3) make the swap (still constant time).
+
+5. How many times we need for this operation? For a length N array ($N = 2^k \times 10$), this will be done k layers, each layer (i-th layer, i=1, ...) we have to make 2^(i-1) operations, the total number is 2^k-1, which is N/10-1. Therefore this is affordable, given that for any subarray with length <= 10, we will use insertion sort.
