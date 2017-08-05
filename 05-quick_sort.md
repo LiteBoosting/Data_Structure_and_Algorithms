@@ -32,8 +32,8 @@ k = 15, mean: 4980.39, var: 1480211.34, ratio: 17.76%
 k = 17, mean: 5003.84, var: 1314474.02, ratio: 15.77%
 k = 19, mean: 4998.61, var: 1191109.57, ratio: 14.29%
 ```
-By using K = 3, 5, ..., we get similar expection, and the variance decreases to 60.45%, 43.24%, .... We see that the decreasing after K=5 is not that significant, therefore we suggest using K=5 (or K=3).
+By using $K = 3, 5, ...$, we get similar expection, and the variance decreases to 60.45%, 43.24%, .... We see that the decreasing after $K=5$ is not that significant, therefore we suggest using $K \le 5$.
 
-4. The computational burden for adding this mimic-distribution-taking-median step is that we need to (1) generate random number 5 times (which is constant time, since we do not need to shuffle the array, just generate a random number from 0 to 1, then multiply by the length of the array, and take integer); (2) find its median (finding median from 5 numbers, constant time); (3) make the swap (still constant time).
+4. The computational burden for adding this `mimic-distribution-take-median` step is (1) generating random number 5 times (which is constant time, since we do not need to shuffle the array, just generate 5 random numbers from $[0, 1]$, then multiply by the length of the array and take integer); (2) finding its median (finding median from 5 numbers, constant time); (3) making the swap (constant time).
 
-5. How many times we need for this operation? For a length N array ($N = 2^k \times 10$), this will be done k layers, each layer (i-th layer, i=1, ...) we have to make 2^(i-1) operations, the total number is 2^k-1, which is N/10-1. Therefore this is affordable, given that for any subarray with length <= 10, we will use insertion sort.
+5. How many times we need for this operation? For a length $N$ array ($N = 2^k \times 10$), this operation will be done $k$ layers (this is the ideal case, but since we get better partition key, the actual implementation of sort is even closer to the ideal case then before), each layer ($i$-th layer, $i=1, ...$) we have to make $2^(i-1)$ operations, the total number is $2^k-1$, which is $N/10-1$. Therefore this is affordable, given that for any subarray with length no more than 10, we will use insertion sort.
