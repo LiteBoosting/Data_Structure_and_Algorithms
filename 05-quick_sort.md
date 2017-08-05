@@ -6,43 +6,35 @@ N = 10000
 M = 10000
 vec = np.arange(N)
 
-sample_1 = np.random.choice(vec, size=M, replace=True, p=None)
-print(np.mean(sample_1))
-print(np.var(sample_1))
-
-sample_3 = np.array([np.median(np.random.choice(vec, size=3, replace=False, p=None)) for i in np.arange(M)])
-print(np.mean(sample_3))
-print(np.var(sample_3))
-
-sample_5 = np.array([np.median(np.random.choice(vec, size=5, replace=False, p=None)) for i in np.arange(M)])
-print(np.mean(sample_5))
-print(np.var(sample_5))
-
-sample_7 = np.array([np.median(np.random.choice(vec, size=7, replace=False, p=None)) for i in np.arange(M)])
-print(np.mean(sample_7))
-print(np.var(sample_7))
-
-sample_9 = np.array([np.median(np.random.choice(vec, size=9, replace=False, p=None)) for i in np.arange(M)])
-print(np.mean(sample_9))
-print(np.var(sample_9))
-
-sample_11 = np.array([np.median(np.random.choice(vec, size=11, replace=False, p=None)) for i in np.arange(M)])
-print(np.mean(sample_11))
-print(np.var(sample_11))
+K = np.arange(start=1, stop=16, step=2)
+ratio = np.full((len(K),), None, dtype=float)
+theoretical_variance = (N*N-1)/12
+for i, k in enumerate(K):
+    sample = np.array([np.median(np.random.choice(vec, size=k, replace=False, p=None)) for i in np.arange(M)])
+    print(np.mean(sample))
+    print(np.var(sample))
+    ratio[i] = np.var(sample)/theoretical_variance
+print(ratio)
 ```
 Here is thee result:
 ```python
-4965.6792
-8355455.13149
-5022.9071
-5032570.35607
-4984.9409
-3568373.81881
-5012.6564
-2729247.15894
-4996.4185
-2314803.05596
-4988.5951
-1924592.75316
+5012.5153
+8343458.23817
+4947.8171
+5051942.11225
+4973.8719
+3573911.48329
+4980.3896
+2773978.86661
+4992.9284
+2275894.59247
+4972.6089
+1933864.46754
+4981.4073
+1691273.55501
+5016.4774
+1463399.34069
+[ 1.001215    0.60623306  0.42886938  0.33287747  0.27310735  0.23206374
+  0.20295283  0.17560792]
 ```
 We can see by using K = 3, 5, 7, 9, 11, we get unchanged expection, and the variance decreases to 58.33%, 44.05%, 32.14%, 27.38%, and 22.62%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
