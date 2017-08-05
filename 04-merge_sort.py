@@ -1,16 +1,25 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+#%%
+import numpy as np
+from copy import deepcopy
+
 #%%
 class merge_sort(object):
+    """Use merge sort to sort an array, increasing order only.
+    """
     def __init__(self, vec):
         self.vec = deepcopy(np.array(vec))
-        self.vec_aux = deepcopy(np.array(vec))
         self.n = len(vec)
         
     def merge(self, vec_a, vec_b):
+        """Merge two sorted arrays.
+        """
         s_a, s_b = len(vec_a), len(vec_b)
         vec_c = deepcopy(np.concatenate((vec_a, vec_b)))
-        i_a, i_b = 0, 0
+        i_a, i_b, i_c = 0, 0, 0
         key = True
-        i_c = 0
         if vec_a[s_a-1] <= vec_b[0]:
             return vec_c
         else:
@@ -27,37 +36,69 @@ class merge_sort(object):
                     key = False
             return vec_c
             
-    def main_sort(self, left=0, right=None):
+    def sort_1(self, left=0, right=None):
+        """Merge sort using recurrsion.
+        """
         if right == None:
             right = self.n
         if right-left == 1:
             return self.vec[left:right]
         else:
             middle = int(left+(right-left)/2)
-            return self.merge(self.main_sort(left, middle), self.main_sort(middle, right))
-    def main_sort_1(self):
-        # do not use recursion
-        # partition
-        log_n = int(np.floor(np.log2(self.n)))
-        h = 1
-        for layer in np.arange(log_n):
-            h = h*2
-            partition = np.concatenate((np.arange(start=0, stop=self.n, step=h), np.array([self.n])))
-            for i in np.arange(len(partition)-1):
-                left = partition[i]
-                right = partition[i+1]
-                if right < self.n:
-                    middle = int((left+right)/2)
-                    self.vec[left:right] = self.merge(self.vec_aux[left:middle], self.vec_aux[middle:right])
-                else:
-                    right = self.n
-                    self.vec[left:right] = self.vec_aux[left:right]
+            return self.merge(self.sort_1(left, middle), self.sort_1(middle, right))
+    
+    def sort_2(self):
+        """Merge sort without using recursion. Do hierarchical partition instead.
+        """
+        self.log_n = int(np.ceil(np.log2(self.n)))
+        step_size = 1
+        for layer in np.arange(self.log_n):
+            partition_net = np.concatenate((np.arange(0, self.n, step=step_size), np.array([self.n])))
+            step_size *= 2
+            for i in np.arange(start=0, stop=int((len(partition_net)-1)/2)*step_size, step=step_size, dtype=int):
+                left, middle, right = partition_net[i], partition_net[i+1], partition_net[i+2]
+                self.vec[left:right] = self.merge(self.vec[left:middle], self.vec[middle:right])
+
+    def sort(self, recursion=False):
+        """Main sorting function, will call either sort_1() or sort_2()
+        """
+        if recursion:
+            self.vec = self.sort_1()
+        else:
+            self.sort_2()
         
 #%%
-vec = np.array([0, 3, 4, 2, 9, 4])
-obj_ = merge_sort(vec)
-print obj_.main_sort()
+vec = np.array([0])
+obj_sort = merge_sort(vec)
+obj_sort.sort()
+print(obj_sort.vec)
+
 #%%
-vec = np.array([0, 1, 0, 1, 0, 1])
-obj_ = merge_sort(vec)
-print obj_.main_sort()
+vec = np.array([0])
+obj_sort = merge_sort(vec)
+obj_sort.sort(recursion=True)
+print(obj_sort.vec)
+
+#%%
+vec = np.array([0, 3, 4, 2, 9, 4])
+obj_sort = merge_sort(vec)
+obj_sort.sort()
+print(obj_sort.vec)
+
+#%%
+vec = np.array([0, 3, 4, 2, 9, 4])
+obj_sort = merge_sort(vec)
+obj_sort.sort(recursion=True)
+print(obj_sort.vec)
+
+#%%
+vec = np.array([0, 1, 0, 1, 0])
+obj_sort = merge_sort(vec)
+obj_sort.sort()
+print(obj_sort.vec)
+
+#%%
+vec = np.array([0, 1, 0, 1, 0])
+obj_sort = merge_sort(vec)
+obj_sort.sort(recursion=True)
+print(obj_sort.vec)
