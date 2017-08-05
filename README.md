@@ -3,3 +3,4 @@
 2. Arithmetic expression evaluation using stack
 3. Basic sorting methods (insertion sort, bubble sort, insertion sort)
 4. Merge sort
+5. Quick sort
