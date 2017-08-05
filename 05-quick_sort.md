@@ -1,45 +1,37 @@
-1. The performance of quick-sort relies greatly on the selection of partition key, therefore the algorithm suggests a shuffling before the sorting. Here we propse a method to improve the selection of partition key - to make it closer to the middle point. The method is, instead of randomly pick one value, we randomly pick K values (K could be 3, 5, or higher, but according to our investigation, 5 is enough, we won't gain that much by going beyond 5), then find the middle one (median), then swap this one with the first value, then start the splitting （对接二分，两个盾构机相向而行，直到相遇）.
+1. The performance of quick-sort relies greatly on the selection of partition keys, therefore the algorithm suggests a shuffling before the sorting. Here we propse a method to improve the selection of partition keys - to make each key closer to the corresponding middle point (median). The method is, instead of randomly picking one value, randomly picking $K$ values ($K$ could be 3, 5, or higher, but according to our investigation, 5 is enough, we won't gain that much by going beyond 5), then find the middle one among these $K$ values (median), then swap this middle one with the first value of the whole subarray, then start the splitting （the splitting in quick-sort is like 对接二分，两个盾构机相向而行，正确的留下， 错误的互换，直到相遇）.
 
-2. Here is the simulation code:
+2. Here is the simulation code (to select proper value for $K$):
 ```python
 import numpy as np
 
 N = 10000
 M = 10000
-vec = np.arange(N)
+upper_bound_K = 20
 
-K = np.arange(start=1, stop=16, step=2)
+vec = np.arange(N)
+K = np.arange(start=1, stop=upper_bound_K, step=2)
 ratio = np.full((len(K),), None, dtype=float)
 theoretical_variance = (N*N-1)/12
+
 for i, k in enumerate(K):
     sample = [np.median(np.random.choice(vec, size=k, replace=False)) for i in np.arange(M)]
     sample = np.array(sample)
-    print(np.mean(sample))
-    print(np.var(sample))
     ratio[i] = np.var(sample)/theoretical_variance
-print(ratio*100)
-```
+    print("k = %2d, mean: %7.2f, var: %10.2f, ratio: %5.2f%%" % (k, np.mean(sample), np.var(sample), ratio[i]*100))```
 Here is thee result:
 ```python
-5016.8469
-8271304.28246
-5016.5936
-5037785.82224
-5017.9882
-3603309.47866
-5008.7623
-2744340.8474
-4986.436
-2284062.8771
-4995.931
-1920401.52064
-4990.4618
-1646849.90774
-4988.7481
-1488085.38605
-[ 99.25565238  60.45343047  43.23971418  32.9320905   27.4087548
-  23.04481848  19.76219909  17.85702481]```
-We can see by using K = 3, 5, 7, 9, 11, 13, 15, we get unchanged expection, and the variance decreases to 60.45%, 43.24%, 32.93%, 27.41%, 23.04%, 19.76%, and 17.86%. We see that the decreasing after K=5 is not that significant, therefore we suggest use K=5 (or K=3).
+k =  1, mean: 4993.96, var: 8312260.79, ratio: 99.75%
+k =  3, mean: 5041.19, var: 4995541.68, ratio: 59.95%
+k =  5, mean: 5008.24, var: 3548260.63, ratio: 42.58%
+k =  7, mean: 4992.65, var: 2824385.87, ratio: 33.89%
+k =  9, mean: 4990.13, var: 2264805.98, ratio: 27.18%
+k = 11, mean: 5010.28, var: 1921166.79, ratio: 23.05%
+k = 13, mean: 4995.26, var: 1677672.02, ratio: 20.13%
+k = 15, mean: 4980.39, var: 1480211.34, ratio: 17.76%
+k = 17, mean: 5003.84, var: 1314474.02, ratio: 15.77%
+k = 19, mean: 4998.61, var: 1191109.57, ratio: 14.29%
+```
+By using K = 3, 5, ..., we get similar expection, and the variance decreases to 60.45%, 43.24%, .... We see that the decreasing after K=5 is not that significant, therefore we suggest using K=5 (or K=3).
 
 4. The computational burden for adding this mimic-distribution-taking-median step is that we need to (1) generate random number 5 times (which is constant time, since we do not need to shuffle the array, just generate a random number from 0 to 1, then multiply by the length of the array, and take integer); (2) find its median (finding median from 5 numbers, constant time); (3) make the swap (still constant time).
 
