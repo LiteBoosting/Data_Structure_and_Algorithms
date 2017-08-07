@@ -165,14 +165,14 @@ class arithmetic(object):
             else:
                 raise ValueError('value error:' + '(' + element + ')')
             if self.verbose:
-                print(' '*self.indent + 'Running list: ' + ' '.join(running_list) + ", sequential list: " + ' '.join(seq_list))
+                print(' '*self.indent+'Running list: '+' '.join(running_list)+", sequential list: "+' '.join(seq_list))
         # at the end of no_parth_list
         if is_recording:
             is_recording = False
             running_list.append(self.seq_eval(seq_list))
             seq_list = []
             if self.verbose:
-                print(' '*self.indent + 'Running list: ' + ' '.join(running_list) + ", sequential list: " + ' '.join(seq_list))
+                print(' '*self.indent+'Running list: '+' '.join(running_list)+", sequential list: "+' '.join(seq_list))
         # evaluate the whole running_list and return the value
         return_value = self.seq_eval(running_list)
         if self.verbose:
@@ -185,7 +185,7 @@ class arithmetic(object):
         running_list = []
         no_parth_list = []
         if self.verbose:
-            print(' '*self.indent + 'Begin main evaluation for: ' + ' '.join(self.expression))
+            print('Begin main evaluation for: ' + ' '.join(self.expression))
         for element in self.expression:
             if self.element_type(element) == 'rightParenthesis':
                 while(True):
@@ -194,14 +194,14 @@ class arithmetic(object):
                         no_parth_list.insert(0, popped_element)
                     else:
                         if self.verbose:
-                            print(' '*self.indent + "Runing list: " + ' '.join(running_list) + ", no_parth_list: " + ' '.join(no_parth_list))
+                            print("Runing list: "+' '.join(running_list)+", no_parth_list: "+' '.join(no_parth_list))
                         running_list.append(self.no_parth_eval(no_parth_list))
                         no_parth_list = []
                         break
             else:
                 running_list.append(element)
             if self.verbose:
-                print(' '*self.indent + "Runing list: " + ' '.join(running_list) + ", no_parth_list: " + ' '.join(no_parth_list))
+                print("Runing list: "+' '.join(running_list)+", no_parth_list: "+' '.join(no_parth_list))
         return float(self.no_parth_eval(running_list))
 
 #%%
