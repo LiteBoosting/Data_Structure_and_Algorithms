@@ -36,13 +36,13 @@ class priority_queue(object):
     
     def get_parent(self, loc):
         """Return the location (not value) of the parent for this location.
-        If the location is 1 (root node), the return value would be 0.
+        If the location is 0 (root node), the return value would be -1.
         """
         return ((loc+1)//2-1)
     
     def get_largest_child(self, loc):
         """Return the location (not value) of the child with largest value among children for this location.
-        If the location does not have children, i.e., children location exceeds the length, return 0.
+        If the location does not have children, i.e., children location exceeds the length, return -1.
         """
         loc_child0 = (loc+1)*2-1
         loc_child1 = (loc+1)*2
@@ -54,7 +54,7 @@ class priority_queue(object):
         elif (loc_child0 <= self.loc):
             return loc_child0
         else:
-            return 0
+            return -1
     
     def insert(self, value):
         self.BH.append(value)
@@ -84,7 +84,7 @@ class priority_queue(object):
             self.loc -= 1
             loc_current = 0
             loc_child = self.get_largest_child(loc_current)
-            while (loc_child != 0):
+            while (loc_child >= 0):
                 if (self.BH[loc_current] < self.BH[loc_child]):
                     self.BH[loc_current], self.BH[loc_child] = self.BH[loc_child], self.BH[loc_current]
                     loc_current = loc_child
