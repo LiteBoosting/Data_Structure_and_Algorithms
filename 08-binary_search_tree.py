@@ -40,7 +40,7 @@ class BinarySearchTree(object):
     def __init__(self):
         self.root = None
         self.size = 0
-        
+    
     def put(self, key, value):
         if self.root is None:
             if value is not None:
@@ -199,6 +199,46 @@ class BinarySearchTree(object):
         while successorNode.hasRightChild():
             successorNode = successorNode.rightChild
         return successorNode
+    
+    def traverse(self, node='root', verbose=True, save=False):
+        if node == 'root':
+            node = self.root
+        self.ordered_key_list = []
+        self.verbose = verbose
+        self.save = save
+        self._traverse(node)
+        return self.ordered_key_list
+    
+    def _traverse(self, node='root'):
+        if node is None:
+            return
+        self._traverse(node.leftChild)
+        if self.verbose:
+            print(node.key)
+        if self.save:
+            self.ordered_key_list.append(node.key)
+        self._traverse(node.rightChild)
+        return
+    
+    def traverse2(self, node='root'):
+        if node == 'root':
+            node = self.root
+        self.ordered_key_stack = []
+        self.operation_stack = []
+        self.operation_stack.append(node)
+        while len(self.operation_stack) > 0:
+            node = self.operation_stack.pop()
+            print(node.key)
+            if node.isLeaf(): # pop the node and delete the node
+                self.ordered_key_stack.append(node.key)
+                self._deleteLeafNode(node)
+            elif node.hasLeftChild(): # append the node and its leftChild
+                self.operation_stack.extend([node, node.leftChild])
+            else:  # only has right child, pop the node, delete the node, and append its rightChild
+                self.ordered_key_stack.append(node.key)
+                self.operation_stack.append(node.rightChild)
+                self._deleteSingleChildNode(node)
+        return self.ordered_key_stack
 
 #%%
 def printNode(node):
@@ -218,6 +258,12 @@ for key, value in zip(key_list, value_list):
         BST_1.put(key, value)
     except:
         print("Not able to insert - ", (key, value))
+
+#%%
+BST_1.traverse(verbose=False, save=True)
+
+#%%
+BST_1.traverse2()
 
 #%%
 printNode(BST_1.root)
