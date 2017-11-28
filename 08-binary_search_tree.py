@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 #%%
+from collections import deque
+
+#%%
 class TreeNode(object):
-    def __init__(self, key, value, leftChild=None, rightChild=None, parent=None, depth=None):
+    def __init__(self, key, value, leftChild=None, rightChild=None, parent=None):
         self.key = key
         self.value = value
         self.leftChild = leftChild
         self.rightChild = rightChild
         self.parent = parent
-        self.depth = depth
     
     def hasLeftChild(self):
         return (self.leftChild is not None)
@@ -200,46 +202,67 @@ class BinarySearchTree(object):
             successorNode = successorNode.rightChild
         return successorNode
     
-    def traverse(self, node='root', verbose=True, save=False):
-        if node == 'root':
-            node = self.root
+    def orderedTraverse(self):
         self.ordered_key_list = []
-        self.verbose = verbose
-        self.save = save
-        self._traverse(node)
+        self._orderedTraverse2()
         return self.ordered_key_list
     
-    def _traverse(self, node='root'):
+    def _orderedTraverse(self, node=None):
         if node is None:
             return
-        self._traverse(node.leftChild)
-        if self.verbose:
-            print(node.key)
-        if self.save:
-            self.ordered_key_list.append(node.key)
-        self._traverse(node.rightChild)
+        self._orderedTraverse(node.leftChild)
+        self.ordered_key_list.append(node.key)
+        self._orderedTraverse(node.rightChild)
         return
     
-    def traverse2(self, node='root'):
-        if node == 'root':
-            node = self.root
-        self.ordered_key_stack = []
-        self.operation_stack = []
-        self.operation_stack.append(node)
-        while len(self.operation_stack) > 0:
-            node = self.operation_stack.pop()
-            print(node.key)
+    def _orderedTraverse2(self):
+        operation_stack = []
+        operation_stack.append(self.root)
+        self.popedLeftChild = False
+        while len(operation_stack) > 0:
+            node = operation_stack.pop()
+            if node == '+':
+                node = operation_stack.pop()
+                self.popedLeftChild = True
             if node.isLeaf(): # pop the node and delete the node
-                self.ordered_key_stack.append(node.key)
-                self._deleteLeafNode(node)
-            elif node.hasLeftChild(): # append the node and its leftChild
-                self.operation_stack.extend([node, node.leftChild])
+                self.ordered_key_list.append(node.key)
+            elif (node.hasLeftChild()) and (not self.popedLeftChild): # append the node and its leftChild
+                operation_stack.extend([node, '+', node.leftChild])
             else:  # only has right child, pop the node, delete the node, and append its rightChild
-                self.ordered_key_stack.append(node.key)
-                self.operation_stack.append(node.rightChild)
-                self._deleteSingleChildNode(node)
-        return self.ordered_key_stack
+                self.ordered_key_list.append(node.key)
+                operation_stack.append(node.rightChild)
+        return
+    
+    def depthFirstTraverse(self):
+        self.depthFirstTraverse_list = []
+        self.depthFirstTraverse_key_list = []
+        operation_stack = []
+        operation_stack.append(self.root)
+        while operation_stack:
+            node = operation_stack.pop()
+            self.depthFirstTraverse_list.append(node)
+            self.depthFirstTraverse_key_list.append(node.key)
+            if node.hasRightChild():
+                operation_stack.append(node.rightChild)
+            if node.hasLeftChild():
+                operation_stack.append(node.leftChild)
+        return self.depthFirstTraverse_key_list
 
+    def breadthFirstTraverse(self):
+        self.breadthFirstTraverse_list = []
+        self.breadthFirstTraverse_key_list = []
+        operation_queue = deque()
+        operation_queue.append(self.root)
+        while operation_queue:
+            node = operation_queue.popleft()
+            self.breadthFirstTraverse_list.append(node)
+            self.breadthFirstTraverse_key_list.append(node.key)
+            if node.hasLeftChild():
+                operation_queue.append(node.leftChild)
+            if node.hasRightChild():
+                operation_queue.append(node.rightChild)
+        return self.breadthFirstTraverse_key_list
+    
 #%%
 def printNode(node):
     if node is not None:
@@ -248,8 +271,8 @@ def printNode(node):
         print('None')
 
 #%%
-key_list   = [1.0, 2.0, 5.0, 0.0, 0.2, 'x', 'y', 0.9]
-value_list = ['a', 'b', '2', '3', '4', 'a', 'c', 1.9]
+key_list   = [1.0, 2.0, 5.0, 0.0, 0.2, 'x', 'y', 0.9, 0.1]
+value_list = ['a', 'b', '2', '3', '4', 'a', 'c', 1.9, 1.8]
 
 BST_1 = BinarySearchTree()
 
@@ -260,10 +283,13 @@ for key, value in zip(key_list, value_list):
         print("Not able to insert - ", (key, value))
 
 #%%
-BST_1.traverse(verbose=False, save=True)
+BST_1.orderedTraverse()
 
 #%%
-BST_1.traverse2()
+BST_1.depthFirstTraverse()
+
+#%%
+BST_1.breadthFirstTraverse()
 
 #%%
 printNode(BST_1.root)
