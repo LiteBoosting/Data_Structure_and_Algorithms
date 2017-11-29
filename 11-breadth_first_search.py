@@ -3,22 +3,23 @@
 
 #%%
 import numpy as np
+from collections import deque
 
 #%%
 class Graph(object):
     def __init__(self, V):
         self.V = V
         self.E = 0
-        self.graphDict = {}
+        self.adjacencyDict = {}
         for i in range(self.V):
-            self.graphDict[i] = []
+            self.adjacencyDict[i] = []
     
     def addEdge(self, edge):
         '''edge is a tuple of two vertices to be connected.
         '''
         a, b = edge
-        self.graphDict[a].append(b)
-        self.graphDict[b].append(a)
+        self.adjacencyDict[a].append(b)
+        self.adjacencyDict[b].append(a)
         self.E += 1
 
 #%%
@@ -48,7 +49,7 @@ class DepthFirstSearch(object):
         self._pathExploration2(G, s)
     
     def _pathExploration(self, G, t):
-        for r in G.graphDict[t]:
+        for r in G.adjacencyDict[t]:
             if self.marked[r]:
                 continue
             self.marked[r] = True
@@ -59,7 +60,7 @@ class DepthFirstSearch(object):
         self.searchStack.append(t)
         while len(self.searchStack) > 0:
             r = self.searchStack.pop()
-            for r2 in G.graphDict[r]:
+            for r2 in G.adjacencyDict[r]:
                 if not self.marked[r2]:
                     self.searchStack.append(r2)
                     self.marked[r2] = True
@@ -92,7 +93,6 @@ dfp1.isConnected(7)
 dfp1.marked
 
 #%%
-from collections import deque
 class BreadthFirstSearch(object):
     def __init__(self, G, s):
         self.marked = np.full((G.V,), False, dtype=bool)
@@ -104,7 +104,7 @@ class BreadthFirstSearch(object):
         self.searchQueue.append(t)
         while len(self.searchQueue) > 0:
             r = self.searchQueue.popleft()
-            for r2 in G.graphDict[r]:
+            for r2 in G.adjacencyDict[r]:
                 if not self.marked[r2]:
                     self.searchQueue.append(r2)
                     self.marked[r2] = True
@@ -135,3 +135,68 @@ class BreadthFirstSearch(object):
 dfp2 = BreadthFirstSearch(G1, 0)
 dfp1.isConnected(7)
 dfp1.marked
+
+#%%
+class GraphRingDetector(object):
+    def __init__(self, G):
+        self.marked = np.full((G.V,), False, dtype=bool)
+        self.edgeTo = np.full((G.V,), None)
+        self.hasRing = False
+        self.ringVertex = None
+        self.ringDirection1 = None
+        self.ringDirection2 = None
+        for v in range(G.V):
+            if not self.marked[v]:
+                self.searchQueue = deque()
+                self._pathExploration(G, v)
+            if self.hasRing:
+                break
+        if self.hasRing:
+            self.ringPath = deque([self.ringVertex])
+            while True:
+                if self.ringDirection1 != self.ringDirection2:
+                    self.ringPath.append(self.ringDirection1)
+                    self.ringPath.appendleft(self.ringDirection2)
+                else:
+                    self.ringPath.append(self.ringDirection1)
+                    break
+                self.ringDirection1 = self.edgeTo[self.ringDirection1]
+                self.ringDirection2 = self.edgeTo[self.ringDirection2]
+    
+    def _pathExploration(self, G, v):
+        self.searchQueue.append(v)
+        while self.searchQueue:
+            s = self.searchQueue.popleft()
+            self.marked[s] = True
+            for t in G.adjacencyDict[s]:
+                if not self.marked[t]:
+                    self.searchQueue.append(t)
+                    if self.edgeTo[t] is None:
+                        self.edgeTo[t] = s
+                    else:
+                        self.hasRing = True
+                        self.ringVertex = t
+                        self.ringDirection1 = self.edgeTo[t]
+                        self.ringDirection2 = s
+                        return
+        
+#%%
+edges = [
+    (0, 1),
+    (1, 2),
+    (2, 3),
+    (2, 4),
+    (3, 5),
+    (4, 5)
+]
+V = len(edges)
+
+G2 = Graph(V)
+for edge in edges:
+    G2.addEdge(edge)
+
+G2_ = GraphRingDetector(G2)
+if G2_.hasRing:
+    print(G2_.ringPath)
+else:
+    print(G2_.hasRing)
