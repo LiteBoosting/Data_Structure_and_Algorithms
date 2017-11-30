@@ -241,4 +241,37 @@ print(G2.indegree)
 #%%
 class GraphSort(object):
     def __init__(self, G):
-        self.rank = np.full((G.v,), 0, dtype=int)
+        self.rank = np.full((G.V,), 0, dtype=int)
+        for v in range(G.V):
+            if G.indegree[v] == 0:
+                self._rankSearch(G, v)
+    
+    def _rankSearch(self, G, v):
+        searchQueue = deque()
+        searchQueue.append(v)
+        while searchQueue:
+            s = searchQueue.popleft()
+            for t in G.pointToDict[s]:
+                self.rank[t] = max(self.rank[t], self.rank[s]+1)
+                searchQueue.append(t)
+
+#%%
+edges = [
+    (0, 1),
+    (1, 2),
+    (0, 2),
+    (2, 3),
+    (3, 4),
+    (5, 6),
+    (7, 8),
+    (8, 4),
+    (3, 8)
+]
+V = len(edges)
+
+G2 = DirectedGraph(V)
+for edge in edges:
+    G2.addEdge(edge)
+
+G2_sort = GraphSort(G2)
+print(G2_sort.rank)
