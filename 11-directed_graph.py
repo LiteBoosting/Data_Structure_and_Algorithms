@@ -4,6 +4,7 @@
 #%%
 import numpy as np
 from collections import deque
+import itertools
 
 #%%
 class DirectedGraph(object):
@@ -11,11 +12,11 @@ class DirectedGraph(object):
         self.V = V
         self.E = 0
         self.f = {}
-        self.pointToDict = {}
-        self.pointFromDict = {}
+        self.adjacencyDict = {}
+        self.sourceDict = {}
         for i in range(self.V):
-            self.pointToDict[i] = []
-            self.pointFromDict[i] = []
+            self.adjacencyDict[i] = []
+            self.sourceDict[i] = []
         self.indegree = np.full((self.V,), 0, dtype=int)
         self.outdegree = np.full((self.V,), 0, dtype=int)
     
@@ -23,14 +24,13 @@ class DirectedGraph(object):
         '''edge is a tuple of two vertices to be connected.
         '''
         a, b = edge
-        self.pointToDict[a].append(b)
-        self.pointFromDict[b].append(a)
+        self.adjacencyDict[a].append(b)
+        self.sourceDict[b].append(a)
         self.outdegree[a] += 1
         self.indegree[b] += 1
         self.E += 1
 
 #%%
-V = 9
 edges = [
     (0, 5),
     (4, 3),
@@ -42,142 +42,146 @@ edges = [
     (7, 8),
     (5, 3)
 ]
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
-G1 = DirectedGraph(V)
+DG1 = DirectedGraph(V)
 for edge in edges:
-    G1.addEdge(edge)
+    DG1.addEdge(edge)
 
 #%%
 class DepthFirstSearch(object):    
-    def __init__(self, G, s):
+    def __init__(self, G, v):
+        self.v = v
         self.marked = np.full((G.V,), False, dtype=bool)
-        self.edgeTo = np.full((G.V,), None)
-        self.searchStack = []
-        self._pathExploration2(G, s)
+        self.predecessor = np.full((G.V,), None)
+        self._pathExploration2(G, v)
     
-    def _pathExploration(self, G, t):
-        for r in G.pointToDict[t]:
-            if self.marked[r]:
-                continue
-            self.marked[r] = True
-            self.edgeTo[r] = t
-            self._pathExploration(G, r)
+    def _pathExploration(self, G, v):
+        for s in G.adjacencyDict[v]:
+            if not self.marked[s]:
+                self.marked[s] = True
+                self.predecessor[s] = v
+                self._pathExploration(G, s)
 
-    def _pathExploration2(self, G, t):
-        self.searchStack.append(t)
-        while len(self.searchStack) > 0:
-            r = self.searchStack.pop()
-            for r2 in G.pointToDict[r]:
-                if not self.marked[r2]:
-                    self.searchStack.append(r2)
-                    self.marked[r2] = True
-                    self.edgeTo[r2] = r
+    def _pathExploration2(self, G, v):
+        searchStack = []
+        searchStack.append(v)
+        while searchStack:
+            s = searchStack.pop()
+            for t in G.adjacencyDict[s]:
+                if not self.marked[t]:
+                    searchStack.append(t)
+                    self.marked[t] = True
+                    self.predecessor[t] = s
     
     def connectedSet(self):
         return list(np.where(self.marked == True)[0])
     
-    def isConnected(self, t):
-        return self.marked[t]
+    def isConnected(self, s):
+        return self.marked[s]
 
-    def pathTo(self, t):
-        if not self.isConnected(t):
+    def pathTo(self, s):
+        if not self.isConnected(s):
             return None
-        else:
-            path = []
-            path.append(t)
-            s1 = t
-            while True:
-                s2 = self.edgeTo[s1]
-                if s2 == self.s:
-                    path.append(self.s)
-                    return path
-                else:
-                    path.append(s2)
-                    s1 = s2
+        path = []
+        path.append(s)
+        t1 = s
+        while t1 != self.v:
+            t2 = self.predecessor[t1]
+            path.append(t2)
+            t1 = t2
+        return path
+                
 #%%
-dfp1 = DepthFirstSearch(G1, 0)
-dfp1.isConnected(7)
-dfp1.marked
+DFS1 = DepthFirstSearch(DG1, 0)
+print(DFS1.isConnected(4))
+print(DFS1.marked)
+print(DFS1.predecessor)
+print(DFS1.connectedSet())
+print(DFS1.pathTo(3))
+print(DFS1.isConnected(7))
 
 #%%
 class BreadthFirstSearch(object):
-    def __init__(self, G, s):
+    def __init__(self, G, v):
+        self.v = v
         self.marked = np.full((G.V,), False, dtype=bool)
-        self.edgeTo = np.full((G.V,), None)
-        self.searchQueue = deque()
-        self._pathExploration(G, s)
+        self.predecessor = np.full((G.V,), None)
+        self._pathExploration(G, v)
     
-    def _pathExploration(self, G, t):
-        self.searchQueue.append(t)
-        while len(self.searchQueue) > 0:
-            r = self.searchQueue.popleft()
-            for r2 in G.pointToDict[r]:
-                if not self.marked[r2]:
-                    self.searchQueue.append(r2)
-                    self.marked[r2] = True
-                    self.edgeTo[r2] = r
+    def _pathExploration(self, G, v):
+        searchQueue = deque()
+        searchQueue.append(v)
+        while searchQueue:
+            s = searchQueue.popleft()
+            for t in G.adjacencyDict[s]:
+                if not self.marked[t]:
+                    searchQueue.append(t)
+                    self.marked[t] = True
+                    self.predecessor[t] = s
     
     def connectedSet(self):
         return list(np.where(self.marked == True)[0])
     
-    def isConnected(self, t):
-        return self.marked[t]
+    def isConnected(self, s):
+        return self.marked[s]
 
-    def pathTo(self, t):
-        if not self.isConnected(t):
+    def pathTo(self, s):
+        if not self.isConnected(s):
             return None
-        else:
-            path = []
-            path.append(t)
-            s1 = t
-            while True:
-                s2 = self.edgeTo[s1]
-                if s2 == self.s:
-                    path.append(self.s)
-                    return path
-                else:
-                    path.append(s2)
-                    s1 = s2
+        path = []
+        path.append(s)
+        t1 = s
+        while t1 != self.v:
+            t2 = self.predecessor[t1]
+            path.append(t2)
+            t1 = t2
+        return path
+                
 #%%
-dfp2 = BreadthFirstSearch(G1, 0)
-dfp1.isConnected(7)
-dfp1.marked
+BFS1 = BreadthFirstSearch(DG1, 0)
+print(BFS1.isConnected(7))
+print(BFS1.marked)
+print(BFS1.isConnected(4))
+print(BFS1.marked)
+print(BFS1.predecessor)
+print(BFS1.connectedSet())
+print(BFS1.pathTo(3))
 
 #%%
-class GraphRingDetector(object):
+class DiGraphCycleDetector(object):
     def __init__(self, G):
         self.counter = np.full((G.V,), 0, dtype=int)
-        self.hasRing = False
+        self.hasCycle = False
         self.marked = np.full((G.V,), False, dtype=bool)
         self.num_marked = 0
         for v in range(G.V):
-            if not G.pointFromDict[v]:
-                self.searchQueue = deque()
+            if not G.sourceDict[v]:
                 self._pathExploration(G, v)
-                if self.hasRing:
+                if self.hasCycle:
                     return
         if self.num_marked < G.V:
-            self.hasRing = True
-                
+            self.hasCycle = True
     
     def _pathExploration(self, G, v):
+        searchQueue = deque()
         if not self.marked[v]:
-            self.num_marked += 1
             self.marked[v] = True
-        for t in G.pointToDict[v]:
-            self.searchQueue.append(t)
-        while self.searchQueue:
-            s = self.searchQueue.popleft()
+            self.num_marked += 1
+        for t in G.adjacencyDict[v]:
+            searchQueue.append(t)
+        while searchQueue:
+            s = searchQueue.popleft()
             if not self.marked[s]:
-                self.num_marked += 1
                 self.marked[s] = True
+                self.num_marked += 1
             self.counter[s] += 1
             if self.counter[s] > G.indegree[s]:
-                self.hasRing = True
+                self.hasCycle = True
                 return
-            for t in G.pointToDict[s]:
-                self.searchQueue.append(t)
-        
+            for t in G.adjacencyDict[s]:
+                searchQueue.append(t)
+
 #%%
 edges = [
     (0, 1),
@@ -185,61 +189,22 @@ edges = [
     (2, 3),
     (2, 4),
     (3, 5),
-    (4, 5)
+    (4, 5),
+    (5, 0)
 ]
-
-V = len(edges)
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
 G2 = DirectedGraph(V)
 for edge in edges:
     G2.addEdge(edge)
 
-G2_ring = GraphRingDetector(G2)
-if G2_ring.hasRing:
-    print(G2_ring.ringPath)
-else:
-    print('No ring')
-print(G2_ring.counter)
+G2_cycle = DiGraphCycleDetector(G2)
+print(G2_cycle.hasCycle)
+print(G2_cycle.counter)
 print(G2.indegree)
 
 #%%
-edges = [
-    (0, 1),
-    (1, 2),
-    (2, 1)
-]
-V = len(edges)
-
-G2 = DirectedGraph(V)
-for edge in edges:
-    G2.addEdge(edge)
-
-G2_ring = GraphRingDetector(G2)
-print(G2_ring.hasRing)
-print(G2_ring.counter)
-print(G2.indegree)
-
-#%%
-edges = [
-    (0, 1),
-    (1, 1),
-    (0, 2),
-    (2, 3),
-    (3, 1)
-]
-V = len(edges)
-
-G2 = DirectedGraph(V)
-for edge in edges:
-    G2.addEdge(edge)
-
-G2_ring = GraphRingDetector(G2)
-print(G2_ring.hasRing)
-print(G2_ring.counter)
-print(G2.indegree)
-
-#%%
-class GraphSort(object):
+class DiGraphSort(object):
     def __init__(self, G):
         self.rank = np.full((G.V,), 0, dtype=int)
         for v in range(G.V):
@@ -251,7 +216,7 @@ class GraphSort(object):
         searchQueue.append(v)
         while searchQueue:
             s = searchQueue.popleft()
-            for t in G.pointToDict[s]:
+            for t in G.adjacencyDict[s]:
                 self.rank[t] = max(self.rank[t], self.rank[s]+1)
                 searchQueue.append(t)
 
@@ -267,11 +232,114 @@ edges = [
     (8, 4),
     (3, 8)
 ]
-V = len(edges)
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
 G2 = DirectedGraph(V)
 for edge in edges:
     G2.addEdge(edge)
 
-G2_sort = GraphSort(G2)
+G2_sort = DiGraphSort(G2)
 print(G2_sort.rank)
+
+#%%
+class DFSSort(object):
+    def __init__(self, G):
+        self.marked = np.full((G.V,), False, dtype=bool)
+        self.orderedList = []
+        for v in range(G.V):
+            if not self.marked[v]:
+                self._DFS(G, v)
+    
+    def _DFS(self, G, v):
+        searchStack = []
+        searchStack.append(v)
+        self.marked[v] = True
+        while searchStack:
+            hasChild = False
+            s = searchStack.pop()
+            searchStack.append(s)
+            for t in G.adjacencyDict[s]:
+                if not self.marked[t]:
+                    hasChild = True
+                    searchStack.append(t)
+                    self.marked[t] = True
+            if not hasChild:
+                self.orderedList.append(searchStack.pop())
+                hasChild = False
+
+#%%
+edges = [
+    (0, 5),
+    (4, 3),
+    (0, 1),
+    (6, 4),
+    (5, 4),
+    (0, 2),
+    (0, 6),
+    (7, 8),
+    (5, 3),
+    (1, 0),
+    (3, 1)
+]
+V = max(list(itertools.chain.from_iterable(edges)))+1
+
+DG1 = DirectedGraph(V)
+for edge in edges:
+    DG1.addEdge(edge)
+DG1_sort = DFSSort(DG1)
+print(DG1_sort.orderedList)
+
+#%%
+class ConnectedComponents(object):
+    def __init__(self, G):
+        self.orderedList = []
+        self.marked = np.full((G.V,), False, dtype=bool)
+        self._inverseDFSSort(G)
+        self.counter = 0
+        self.counterVec = np.full((G.V,), 0, dtype=int)
+        self._DFSCount(G)
+    
+    def _inverseDFSSort(self, G):
+        for v in range(G.V):
+            if not self.marked[v]:
+                self._inverseDFS(G, v)
+    
+    def _inverseDFS(self, G, v):
+        searchStack = []
+        searchStack.append(v)
+        self.marked[v] = True
+        while searchStack:
+            hasChild = False
+            s = searchStack.pop()
+            searchStack.append(s)
+            for t in G.sourceDict[s]:
+                if not self.marked[t]:
+                    hasChild = True
+                    searchStack.append(t)
+                    self.marked[t] = True
+            if not hasChild:
+                self.orderedList.append(searchStack.pop())
+                hasChild = False
+    
+    def _DFSCount(self, G):
+        self.marked = np.full((G.V,), False, dtype=bool)
+        for v in self.orderedList:
+            if not self.marked[v]:
+                self._DFS(G, v)
+    
+    def _DFS(self, G, v):
+        self.counter += 1
+        searchStack = []
+        searchStack.append(v)
+        self.marked[v] = True
+        while searchStack:
+            s = searchStack.pop()
+            self.counterVec[s] = self.counter
+            for t in G.sourceDict[s]:
+                if not self.marked[t]:
+                    searchStack.append(t)
+                    self.marked[t] = True
+
+#%%
+DG1_cc = ConnectedComponents(DG1)
+print(DG1_cc.counterVec)
