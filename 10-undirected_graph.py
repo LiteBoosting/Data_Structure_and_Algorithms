@@ -12,6 +12,7 @@
 #%%
 import numpy as np
 from collections import deque
+import itertools
 
 #%%
 class UndirectedGraph(object):
@@ -45,7 +46,7 @@ edges = [
     (7, 8),
     (5, 3)
 ]
-V = len(edges)
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
 UG1 = UndirectedGraph(V)
 for edge in edges:
@@ -126,8 +127,8 @@ class BreadthFirstSearch(object):
     def connectedSet(self):
         return list(np.where(self.marked == True)[0])
     
-    def isConnected(self, t):
-        return self.marked[t]
+    def isConnected(self, s):
+        return self.marked[s]
 
     def pathTo(self, s):
         if not self.isConnected(s):
@@ -143,11 +144,11 @@ class BreadthFirstSearch(object):
 
 #%%
 BFS1 = BreadthFirstSearch(UG1, 0)
-print(DFS1.isConnected(4))
-print(DFS1.marked)
-print(DFS1.predecessor)
-print(DFS1.connectedSet())
-print(DFS1.pathTo(3))
+print(BFS1.isConnected(4))
+print(BFS1.marked)
+print(BFS1.predecessor)
+print(BFS1.connectedSet())
+print(BFS1.pathTo(3))
 
 #%%
 class UGCycleDetector(object):
@@ -202,7 +203,7 @@ edges = [
     (3, 5),
     (4, 5)
 ]
-V = len(edges)
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
 G2 = UndirectedGraph(V)
 for edge in edges:
@@ -268,7 +269,7 @@ edges = [
     (3, 5),
     (4, 5)
 ]
-V = len(edges)
+V = max(list(itertools.chain.from_iterable(edges)))+1
 
 G2_cycle = UGCycleDetector2(V)
 G2_cycle.parents
