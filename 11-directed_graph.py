@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# ##################################################
+# class DirectedGraph (UdGraph)
+# class DepthFirstSearch
+# class BreadthFirstSearch
+# class DiGraphCycleDetector
+# class DiGraphSort
+# class DFSSort
+# class ConnectedComponents
+# ##################################################
+
 #%%
 import numpy as np
 from collections import deque
