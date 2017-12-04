@@ -11,36 +11,58 @@ import numpy as np
 import gc
 
 #%%
-class DirectedEdge(object):
-    def __init__(self, v, w, weight):
-        self.v = v
-        self.w = w
-        self.weight = weight
-
-unit_dtype = np.dtype([('weight', np.float64), ('v', np.int), ('w', np.int)])
+#==============================================================================
+# class DirectedEdge(object):
+#     def __init__(self, v, w, weight):
+#         self.v = v
+#         self.w = w
+#         self.weight = weight
+#==============================================================================
 
 #%%
-print(unit_dtype['weight'])
-print(unit_dtype['v'])
-print(unit_dtype['w'])
+unit_dtype = np.dtype([('v', np.int), ('w', np.int), ('weight', np.float64)])
 
-x = np.array([(3.4, 0, 1), (3.2, 0, 2)], dtype=unit_dtype)
-print(x[1])
-print(x[1]['weight'])
-print(type(x[1]))
-print(type(x[1]['v']))
-print(x[0]['v'])
+# Valid operations for user-defined ndarray:
+#     (1) np.array()
+#     (2) np.repeat()
+#     (3) slicing a[0:2]
+#     (4) indexing a[0]
+#     (5) a.dtype.names
+# Do not use:
+#     (1) np.full()
+#     (2) np.concatenate()
+#     (1) standard swap: a[0], a[1] = a[1], a[0], since a[0] is not immutable any more
 
-queue = np.repeat(np.array([(0.0, 0, 0)], dtype=unit_dtype), 10)
-print(queue)
-
-x[1] = (3.3, 0, 2)
-print(x)
+#%%    
+#==============================================================================
+# print(unit_dtype['v'])
+# print(unit_dtype['w'])
+# print(unit_dtype['weight'])
+# 
+# x = np.array([(0, 1, 3.4), (0, 2, 3.2)], dtype=unit_dtype)
+# print(x[1])
+# print(x[1]['weight'])
+# print(type(x[1]))
+# print(type(x[1]['v']))
+# print(x[0]['v'])
+# 
+# x = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), 10)
+# print(x)
+# 
+# x[1] = (0, 2, 3.3)
+# print(x)
+# 
+# x = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), 10)
+# print(unit_dtype.names)
+# print(queue.dtype)
+# print(queue.dtype.names)
+# 
+#==============================================================================
 
 #%%
 class PriorityQueue(object):
     def __init__(self, init_len=1024, ratio_halve=0.10, ratio_double=0.90, bar_size=100):
-        self.queue = np.repeat(np.array([(0.0, 0, 0)], dtype=unit_dtype), init_len)
+        self.queue = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), init_len)
         self.loc = -1 # location of last value in the queue
         self.space = len(self.queue)
         self.length = self.loc+1
@@ -84,14 +106,23 @@ class PriorityQueue(object):
         else:
             return -1
     
+    def swap(self, loc0, loc1):
+        for var in self.queue.dtype.names:
+            self.queue[loc0][var], self.queue[loc1][var] = self.queue[loc1][var], self.queue[loc0][var]
+    
+    def copy(self, loc):
+        return np.array([tuple(self.queue[loc][var] for var in self.queue.dtype.names)], dtype=unit_dtype)
+
     def insert(self, value):
+        '''value should be a tuple.
+        '''
         self.queue[self.loc+1] = value
         self.loc += 1
         self.update_loc()
         current = self.loc
         parent = self.get_parent(current)
-        while (parent >= 0) and (self.queue[current]['weight'] < self.queue[parent]['weight']):
-            self.queue[current], self.queue[parent] = self.queue[parent], self.queue[current]
+        while (0 <= parent <= self.loc) and (self.queue[current]['weight'] < self.queue[parent]['weight']):
+            self.swap(current, parent)
             current = parent
             parent = self.get_parent(current)
         self.sizingCheck()
@@ -100,14 +131,14 @@ class PriorityQueue(object):
     def pop_min(self):
         if self.is_empty():
             return None
-        minimum = self.queue[0]
-        self.queue[self.loc], self.queue[0] = self.queue[0], self.queue[self.loc]
+        minimum = self.copy(loc=0)[0]
+        self.swap(0, self.loc)
         self.loc -= 1
         self.update_loc()
         current = 0
         child = self.get_smallest_child(current)
-        while (child <= self.loc) and (self.queue[current]['weight'] > self.queue[child]['weight']):
-            self.queue[current], self.queue[child] = self.queue[child], self.queue[current]
+        while (0 <= child <= self.loc) and (self.queue[current]['weight'] > self.queue[child]['weight']):
+            self.swap(current, child)
             current = child
             child = self.get_smallest_child(current)
         self.sizingCheck()
@@ -123,10 +154,10 @@ class PriorityQueue(object):
             self.queue = self.new_queue
             del self.new_queue
         if self.ratio > self.ratio_double:
-            padding_queue = np.repeat(np.array([(0.0, 0, 0)], dtype=unit_dtype), self.space)
-            self.new_queue = np.concatenate(self.queue, padding_queue)
+            self.new_queue = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), self.space*2)
+            self.new_queue[0:self.space] = self.queue
             self.space = self.space*2
-            del self.queue, padding_queue
+            del self.queue
             gc.collect()
             self.ratio = self.length/self.space
             self.queue = self.new_queue
@@ -134,29 +165,31 @@ class PriorityQueue(object):
         return
 
 #%%
-ini = 20
-data_stream = np.array([1, 2, 2, 0, 10, 4])
-event_stream = np.array([1, 1, 0, 1, -1, 1, -1, 1, -1, 1, -1, -1, -1])
-
-PQ1 = PriorityQueue()
-print(PQ1.queue[0:PQ1.length])
-
-i = 0
-for event in event_stream:
-    if (event == 1):
-        print("event: ", event)
-        PQ1.insert((data_stream[i], 0, 0))
-        print(PQ1.queue[0:PQ1.length])
-        i += 1
-    elif (event == -1):
-        print("event: ", event)
-        print(PQ1.pop_min())
-        print(PQ1.queue[0:PQ1.length])
-    elif (event == 0):
-        print("event: ", event)
-        print(PQ1.show_min())
-    else:
-        print("Incorrect event id")
+#==============================================================================
+# ini = 20
+# data_stream = np.array([1, 2, 2, 0, 10, 4])
+# event_stream = np.array([1, 1, 0, 1, -1, 1, -1, 1, -1, 1, -1, -1, -1])
+# 
+# PQ1 = PriorityQueue()
+# print(PQ1.queue[0:PQ1.length])
+# 
+# i = 0
+# for event in event_stream:
+#     if (event == 1):
+#         print("event: ", event)
+#         PQ1.insert((0, 0, data_stream[i]))
+#         print(PQ1.queue[0:PQ1.length])
+#         i += 1
+#     elif (event == -1):
+#         print("event: ", event)
+#         print(PQ1.pop_min())
+#         print(PQ1.queue[0:PQ1.length])
+#     elif (event == 0):
+#         print("event: ", event)
+#         print(PQ1.show_min())
+#     else:
+#         print("Incorrect event id")
+#==============================================================================
 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
