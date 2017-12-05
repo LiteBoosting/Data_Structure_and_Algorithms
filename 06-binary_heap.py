@@ -20,7 +20,9 @@ import gc
 #==============================================================================
 
 #%%
-unit_dtype = np.dtype([('v', np.int), ('w', np.int), ('weight', np.float64)])
+dtype = np.dtype([('v', np.int), ('w', np.int), ('weight', np.float64)])
+unit = (0, 1, 1.1) # example of a unit for this dtype
+key = 'weight' # key name used for comparison in priority queue
 
 # Valid operations for user-defined ndarray:
 #     (1) np.array()
@@ -33,119 +35,128 @@ unit_dtype = np.dtype([('v', np.int), ('w', np.int), ('weight', np.float64)])
 #     (2) np.concatenate()
 #     (1) standard swap: a[0], a[1] = a[1], a[0], since a[0] is not immutable any more
 
-#%%    
+# It is better to make user-defined ndarray dtype to be flattened, i.e., not a tuple with tuple elements.
+# High layer cause more problem in copying, slicing, and more.
+
+#%%
 #==============================================================================
-# print(unit_dtype['v'])
-# print(unit_dtype['w'])
-# print(unit_dtype['weight'])
+# print(dtype['v'])
+# print(dtype['w'])
+# print(dtype['weight'])
 # 
-# x = np.array([(0, 1, 3.4), (0, 2, 3.2)], dtype=unit_dtype)
+# x = np.array([(0, 1, 3.4), (0, 2, 3.2)], dtype=dtype)
 # print(x[1])
 # print(x[1]['weight'])
 # print(type(x[1]))
 # print(type(x[1]['v']))
 # print(x[0]['v'])
 # 
-# x = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), 10)
+# x = np.repeat(np.array([unit], dtype=dtype), 10)
 # print(x)
 # 
 # x[1] = (0, 2, 3.3)
 # print(x)
 # 
-# x = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), 10)
-# print(unit_dtype.names)
-# print(queue.dtype)
-# print(queue.dtype.names)
-# 
+# x = np.repeat(np.array([unit], dtype=dtype), 10)
+# print(dtype.names)
+# print(x.dtype)
+# print(dtype)
+# print(x.dtype.names)
 #==============================================================================
 
 #%%
 class PriorityQueue(object):
-    def __init__(self, init_len=1024, ratio_halve=0.10, ratio_double=0.90, bar_size=100):
-        self.queue = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), init_len)
+    def __init__(self, dtype, unit, key, initialSpace=1024, ratioHalve=0.1, ratioDouble=0.9, barSize=100):
+        self.dtype = dtype
+        self.key = key
+        self.unit = unit
+        self.queue = np.repeat(np.array([self.unit], dtype=self.dtype), initialSpace)
         self.loc = -1 # location of last value in the queue
         self.space = len(self.queue)
         self.length = self.loc+1
         self.ratio = self.length/self.space
-        self.ratio_halve = ratio_halve
-        self.ratio_double = ratio_double
-        self.bar_size = bar_size
+        self.ratioHalve = ratioHalve
+        self.ratioDouble = ratioDouble
+        self.barSize = barSize
     
-    def update_loc(self):
+    def updateQueueLength(self):
         self.length = self.loc+1
         self.ratio = self.length/self.space
         
-    def is_empty(self):
+    def isEmpty(self):
         return (self.loc < 0)
     
-    def show_min(self):
+    def showMin(self):
         """Return the minimum of the binary heap without popping it.
         """
         return (self.queue[0])
     
-    def get_parent(self, loc):
+    def getParent(self, loc):
         """Return the location (not value) of the parent for this location.
         If the location is 0 (root node), the return value would be -1.
         """
         return ((loc+1)//2-1)
     
-    def get_smallest_child(self, loc):
+    def getSmallestChild(self, loc):
         """Return the location (not value) of the child with smallest value among children
            of the location. If the location does not have children, i.e., children location
            exceeds the length, return -1.
         """
         child0 = (loc+1)*2-1
         child1 = (loc+1)*2
-        if (child1 <= self.loc):
-            if self.queue[child0]['weight'] <= self.queue[child1]['weight']:
+        if (0 <= child0 <= child1 <= self.loc):
+            if self.queue[child0][self.key] <= self.queue[child1][self.key]:
                 return child0
             else:
                 return child1
-        elif (child0 <= self.loc):
+        elif (0 <= child0 <= self.loc < child1):
             return child0
         else:
             return -1
     
     def swap(self, loc0, loc1):
-        for var in self.queue.dtype.names:
+        for var in self.dtype.names:
             self.queue[loc0][var], self.queue[loc1][var] = self.queue[loc1][var], self.queue[loc0][var]
+        return
     
     def copy(self, loc):
-        return np.array([tuple(self.queue[loc][var] for var in self.queue.dtype.names)], dtype=unit_dtype)
+        '''Copy the content in loc, and return a tuple.
+        '''
+        return tuple(self.queue[loc][var] for var in self.dtype.names)
 
     def insert(self, value):
         '''value should be a tuple.
         '''
         self.queue[self.loc+1] = value
         self.loc += 1
-        self.update_loc()
+        self.updateQueueLength()
         current = self.loc
-        parent = self.get_parent(current)
-        while (0 <= parent <= self.loc) and (self.queue[current]['weight'] < self.queue[parent]['weight']):
+        parent = self.getParent(current)
+        while (0 <= parent <= self.loc) and (self.queue[current][self.key] < self.queue[parent][self.key]):
             self.swap(current, parent)
             current = parent
-            parent = self.get_parent(current)
+            parent = self.getParent(current)
         self.sizingCheck()
         return
     
-    def pop_min(self):
-        if self.is_empty():
+    def popMin(self):
+        if self.isEmpty():
             return None
-        minimum = self.copy(loc=0)[0]
+        minimum = self.copy(loc=0)
         self.swap(0, self.loc)
         self.loc -= 1
-        self.update_loc()
+        self.updateQueueLength()
         current = 0
-        child = self.get_smallest_child(current)
-        while (0 <= child <= self.loc) and (self.queue[current]['weight'] > self.queue[child]['weight']):
+        child = self.getSmallestChild(current)
+        while (0 <= child <= self.loc) and (self.queue[current][self.key] > self.queue[child][self.key]):
             self.swap(current, child)
             current = child
-            child = self.get_smallest_child(current)
+            child = self.getSmallestChild(current)
         self.sizingCheck()
         return minimum
     
     def sizingCheck(self):
-        if (self.ratio < self.ratio_halve) and (self.length > self.bar_size):
+        if (self.ratio < self.ratioHalve) and (self.length > self.barSize):
             self.space = int(self.space*0.5)
             self.new_queue = self.queue[0:self.space]
             del self.queue
@@ -153,8 +164,8 @@ class PriorityQueue(object):
             self.ratio = self.length/self.space
             self.queue = self.new_queue
             del self.new_queue
-        if self.ratio > self.ratio_double:
-            self.new_queue = np.repeat(np.array([(0, 0, 0.0)], dtype=unit_dtype), self.space*2)
+        if self.ratio > self.ratioDouble:
+            self.new_queue = np.repeat(np.array([self.unit], dtype=self.dtype), self.space*2)
             self.new_queue[0:self.space] = self.queue
             self.space = self.space*2
             del self.queue
@@ -166,11 +177,10 @@ class PriorityQueue(object):
 
 #%%
 #==============================================================================
-# ini = 20
 # data_stream = np.array([1, 2, 2, 0, 10, 4])
 # event_stream = np.array([1, 1, 0, 1, -1, 1, -1, 1, -1, 1, -1, -1, -1])
 # 
-# PQ1 = PriorityQueue()
+# PQ1 = PriorityQueue(dtype, unit, key)
 # print(PQ1.queue[0:PQ1.length])
 # 
 # i = 0
@@ -182,11 +192,11 @@ class PriorityQueue(object):
 #         i += 1
 #     elif (event == -1):
 #         print("event: ", event)
-#         print(PQ1.pop_min())
+#         print(PQ1.popMin())
 #         print(PQ1.queue[0:PQ1.length])
 #     elif (event == 0):
 #         print("event: ", event)
-#         print(PQ1.show_min())
+#         print(PQ1.showMin())
 #     else:
 #         print("Incorrect event id")
 #==============================================================================
